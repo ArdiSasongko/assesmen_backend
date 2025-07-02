@@ -53,9 +53,8 @@ export class UserController {
     };
   }
 
-  @Get()
+  @Get('/profile')
   @HttpCode(200)
-  @UseGuards(AuthGuard)
   async getProfile(@Request() req): Promise<ResponseApi<UserResponse>> {
     const userIdStr: string = req.user.sub;
     const userIdInt: number = parseInt(userIdStr, 10);

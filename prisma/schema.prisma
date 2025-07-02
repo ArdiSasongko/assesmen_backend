@@ -25,11 +25,13 @@ model User {
 }
 
 model Product {
-  id          Int    @id @default(autoincrement()) @db.SmallInt
-  user_id     Int    @db.SmallInt
-  name        String @db.VarChar(100)
-  description String @db.Text
-  price       Int    @db.Integer
+  id          Int      @id @default(autoincrement()) @db.SmallInt
+  user_id     Int      @db.SmallInt
+  name        String   @db.VarChar(100)
+  description String   @db.Text
+  price       Int      @db.Integer
+  created_at  DateTime @db.Timestamptz()
+  updated_at  DateTime @updatedAt
 
   user User @relation(fields: [user_id], references: [id])
 
