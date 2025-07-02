@@ -41,8 +41,8 @@ export class ProductService {
     });
 
     if (exists !== 0) {
-      this.log.warn(`failed: username '${createProduct.name}' already exists`);
-      throw new HttpException('Username already exists', 400);
+      this.log.warn(`failed: products '${createProduct.name}' already exists`);
+      throw new HttpException('Products already exists', 400);
     }
 
     try {

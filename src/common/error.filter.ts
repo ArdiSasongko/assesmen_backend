@@ -3,46 +3,58 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
+  HttpStatus,
+  Inject,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { ResponseApi } from 'src/model/response';
 import { ZodError } from 'zod';
+import { Logger } from 'winston';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 
-@Catch(ZodError, HttpException)
+@Catch()
 export class ErrorFilter implements ExceptionFilter {
+  constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+  ) {}
+
   catch(exception: any, host: ArgumentsHost) {
-    const response: Response = host.switchToHttp().getResponse();
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message = 'Internal server error';
+    let errors: { field: string; message: string; code: string }[] | null =
+      null;
+
+    this.logger.error('Exception occurred', {
+      path: request.url,
+      method: request.method,
+      error: exception.message,
+      stack: exception.stack,
+      timestamp: new Date().toISOString(),
+    });
 
     if (exception instanceof ZodError) {
-      const errors = exception.issues.map((issue) => ({
-        field: issue.path.join('.'),
+      status = HttpStatus.BAD_REQUEST;
+      message = 'Validation failed';
+      errors = exception.issues.map((issue) => ({
+        field: issue.path.join('.') || 'body',
         message: issue.message,
+        code: issue.code,
       }));
-
-      const errorResponse: ResponseApi<any> = {
-        status_code: 400,
-        message: 'Validation failed',
-        errors: errors,
-      };
-
-      response.status(400).json(errorResponse);
     } else if (exception instanceof HttpException) {
-      const status = exception.getStatus();
-      const message = exception.message;
-
-      const errorResponse: ResponseApi<any> = {
-        status_code: status,
-        message: message,
-      };
-
-      response.status(status).json(errorResponse);
-    } else {
-      const errorResponse: ResponseApi<any> = {
-        status_code: 500,
-        message: 'Internal server error',
-      };
-
-      response.status(500).json(errorResponse);
+      status = exception.getStatus();
+      message = exception.message;
     }
+
+    const errorResponse: ResponseApi<any> = {
+      status_code: status,
+      message,
+      ...(errors ? { errors } : {}),
+    };
+
+    response.status(status).json(errorResponse);
   }
 }
