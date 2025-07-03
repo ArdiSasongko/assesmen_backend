@@ -28,7 +28,7 @@ export class UserController {
   async registerUser(
     @Body() request: RegisterUser,
   ): Promise<ResponseApi<UserResponse>> {
-    const result = await this.service.register(request);
+    const result: UserResponse = await this.service.register(request);
 
     this.log.info(`register user (${result.username}) success`);
     return {
@@ -43,7 +43,7 @@ export class UserController {
   async loginUser(
     @Body() request: LoginUser,
   ): Promise<ResponseApi<UserResponse>> {
-    const result = await this.service.login(request);
+    const result: UserResponse = await this.service.login(request);
 
     this.log.info(`login user success`);
     return {
@@ -59,7 +59,7 @@ export class UserController {
     const userIdStr: string = req.user.sub;
     const userIdInt: number = parseInt(userIdStr, 10);
 
-    const result = await this.service.getProfile(userIdInt);
+    const result: UserResponse = await this.service.getProfile(userIdInt);
     this.log.info(`get profile from ${result.username}`);
     return {
       status_code: 200,
